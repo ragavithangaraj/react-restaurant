@@ -1,0 +1,45 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_USERNAME = 'ragavit' // 🔁 replace with your Docker Hub username
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git 'https://github.com/ragavithangaraj/react-restaurant.git' // 🔁 replace with your GitHub repo URL
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+
+        stage('Build & Push Docker Image') {
+            steps {
+                sh '''
+                    echo "Building the React app Docker image..."
+                    docker build -t $DOCKERHUB_USERNAME/react-app .
+                    
+                    echo "Pushing the image to Docker Hub..."
+                    docker push $DOCKERHUB_USERNAME/react-app
+                '''
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh '''
+                    echo "Deploying to Kubernetes..."
+                    kubectl apply -f deployment.yaml
+                    
+                    echo "Deployment finished. You can check your app with:"
+                    minikube service react-app --url
+                '''
+            }
+        }
+    }
+}
